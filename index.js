@@ -133,6 +133,7 @@ function initGame() {
 
 function restart() {
   score = 0;
+  movementBlocked = false;
   document.getElementById("score").innerHTML = score;
   initGame();
   drawState();
