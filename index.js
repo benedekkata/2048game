@@ -10,6 +10,7 @@ canvas.height = CANVAS_SIZE;
 canvas.width = CANVAS_SIZE;
 
 var backgroundColor = "#542169";
+var blurBackgroundColor = "#54216950";
 var cellColor = {
   2: "#BD8CF5",
   4: "#E9C46A",
@@ -275,6 +276,25 @@ function getEmptyFieldIndexes() {
 
 function isValidMoveAvailable() {
   // Check if there is a valid merge that can be made
+  // There is a valid move if any adjacent element in a row or column is the same value
+  // Check for possible merges horizontally
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 3; j++) {
+      if (grid[i][j].value === grid[i][j + 1].value) {
+        return true;
+      }
+    }
+  }
+
+  // Check for possible merges vertically
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 4; j++) {
+      if (grid[i][j].value === grid[i + 1][j].value) {
+        return true;
+      }
+    }
+  }
+
   return false;
 }
 
@@ -364,27 +384,65 @@ function keyPressed(event) {
       // Add a new element to the grid
       addRandomElement();
       const gameSate = getGameState();
+      drawState();
       if (gameSate.gameOver) {
-        drawGameOver(gameSate.gameOverText);
+        drawGameOver(gameSate.gameOverText, score);
       } else {
-        drawState();
+        movementBlocked = false;
       }
-      movementBlocked = false;
       resetCombined();
     });
   }
 }
 
-function drawGameOver(text) {
-  console.log(text);
-  context.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+function drawGameOver(text, score) {
+  const textWidth = context.measureText(text).width;
+  const scoreText = `+ ${score}`;
+  const scoreWidth = context.measureText(scoreText).width;
+  context.beginPath();
+  context.fillStyle = blurBackgroundColor;
+  context.roundRect(0, 0, CANVAS_SIZE, CANVAS_SIZE, 12);
+  context.fill();
+
+  context.beginPath();
+  context.fillStyle = backgroundColor;
+  context.roundRect(
+    CANVAS_SIZE / 2 - textWidth / 2 - gridPadding,
+    CANVAS_SIZE / 2 - FONT_SIZE / 2 - gridPadding / 2,
+    textWidth + gridPadding * 2,
+    FONT_SIZE + gridPadding * 2,
+    12
+  );
+  context.fill();
   context.fillStyle = textColor;
   context.font = `${FONT_SIZE}px sans-serif`;
-  const textWidth = context.measureText(text).width;
   context.fillText(
     text,
     CANVAS_SIZE / 2 - textWidth / 2,
     CANVAS_SIZE / 2 + FONT_SIZE / 2
+  );
+
+  //Draw score
+  context.beginPath();
+  context.fillStyle = backgroundColor;
+  context.roundRect(
+    CANVAS_SIZE / 2 - scoreWidth / 2 - gridPadding,
+    CANVAS_SIZE / 2 -
+      FONT_SIZE / 2 -
+      gridPadding / 2 +
+      FONT_SIZE +
+      gridPadding * 4,
+    scoreWidth + gridPadding * 2,
+    FONT_SIZE + gridPadding * 2,
+    12
+  );
+  context.fill();
+  context.fillStyle = textColor;
+  context.font = `${FONT_SIZE}px sans-serif`;
+  context.fillText(
+    scoreText,
+    CANVAS_SIZE / 2 - scoreWidth / 2,
+    CANVAS_SIZE / 2 + FONT_SIZE / 2 + FONT_SIZE + gridPadding * 4
   );
 }
 
