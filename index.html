@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>2048 Game</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link type="image/png" sizes="32x32" rel="icon" href="favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jaro:opsz@6..72&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <h1 class="header">2048 Game with HTML Canvas</h1>
+    </header>
+    <main>
+      <nav>
+        <div><span>Score:</span> <span id="score">0</span></div>
+        <div><span>Best score:</span> <span id="bestScore">0</span></div>
+        <button class="mainButton" onClick="restart()">
+          <i class="material-symbols-outlined"> restart_alt </i
+          ><span>Restart</span>
+        </button>
+      </nav>
+      <canvas id="gameCanvas"> </canvas>
+    </main>
+    <footer>
+      <small>&copy; 2024 - Created by Katalin Benedek</small>
+    </footer>
+  </body>
+  <script src="index.js"></script>
+</html>

@@ -1,0 +1,67 @@
+#gameCanvas {
+  background-color: #542169;
+  border-radius: 16px;
+  max-width: 75vh;
+}
+
+.header {
+  color: #542169;
+}
+
+body {
+  font-family: "Jaro", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+}
+
+main nav {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  column-gap: 8px;
+  margin-bottom: 20px;
+}
+
+main nav div {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  column-gap: 4px;
+  background-color: #e7d7fe;
+  border: 2px solid #542169;
+  align-self: stretch;
+  padding: 0px 16px;
+  border-radius: 8px;
+  color: #542169;
+}
+
+.mainButton {
+  padding: 8px;
+  background-color: #542169;
+  color: white;
+  border-width: 0px;
+  border-radius: 8px;
+  width: fit-content;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  column-gap: 4px;
+}
+
+.mainButton span {
+  line-height: 24px;
+  font-family: "Jaro", sans-serif;
+  font-size: 16px;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
