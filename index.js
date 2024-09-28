@@ -10,7 +10,6 @@ canvas.height = CANVAS_SIZE;
 canvas.width = CANVAS_SIZE;
 
 var backgroundColor = "#542169";
-var gridLineColor = "#BD8CF5";
 var cellColor = {
   2: "#BD8CF5",
   4: "#E9C46A",
@@ -51,7 +50,7 @@ function drawTiles() {
         x <= CANVAS_SIZE - cellSize;
         x += cellSize + gridPadding
       ) {
-        let element = grid[i][j];
+        let element = grid[i][j].value;
 
         // Set the fill color based on the element value
         if (element === 0) {
@@ -76,7 +75,7 @@ function drawNumbers() {
   context.fillStyle = textColor;
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 4; j++) {
-      let element = grid[i][j];
+      let element = grid[i][j].value;
       if (element !== 0) {
         context.beginPath();
         context.font = `${FONT_SIZE}px sans-serif`;
@@ -120,11 +119,17 @@ function getStartCoordinates() {
 }
 
 function initGame() {
-  grid = Array.from({ length: 4 }, () => new Array(4).fill(0));
+  grid = Array.from({ length: 4 }, () =>
+    new Array(4).fill({ value: 0, isCombined: false })
+  );
   const { x1S, x2S, y1S, y2S } = getStartCoordinates();
 
-  grid[x1S][y1S] = getRandomInt(0, 1) ? 2 : 4;
-  grid[x2S][y2S] = getRandomInt(0, 1) ? 2 : 4;
+  grid[x1S][y1S] = getRandomInt(0, 1)
+    ? { value: 2, isCombined: false }
+    : { value: 4, isCombined: false };
+  grid[x2S][y2S] = getRandomInt(0, 1)
+    ? { value: 2, isCombined: false }
+    : { value: 4, isCombined: false };
 }
 
 function restart() {
@@ -144,17 +149,20 @@ function leftRecursion(indexToMove, row) {
   if (indexToMove - 1 < 0) {
     return row;
   }
-  let element = row[indexToMove];
-  let elementBefore = row[indexToMove - 1];
+  let element = row[indexToMove].value;
+  let elementBefore = row[indexToMove - 1].value;
   if (element === elementBefore && !numbersAdded) {
-    row[indexToMove - 1] = element + elementBefore;
-    row[indexToMove] = 0;
+    row[indexToMove - 1] = { value: element + elementBefore, isCombined: true };
+    row[indexToMove] = { value: 0, isCombined: false };
     score += element + elementBefore;
     numbersAdded = true;
     return row;
   } else if (elementBefore === 0) {
-    row[indexToMove - 1] = element + elementBefore;
-    row[indexToMove] = 0;
+    row[indexToMove - 1] = {
+      value: element + elementBefore,
+      isCombined: false,
+    };
+    row[indexToMove] = { value: 0, isCombined: false };
   }
   return leftRecursion(indexToMove - 1, row);
 }
@@ -163,17 +171,17 @@ function rightRecursion(indexToMove, row) {
   if (indexToMove + 1 >= row.length) {
     return row;
   }
-  let element = row[indexToMove];
-  let elementAfter = row[indexToMove + 1];
+  let element = row[indexToMove].value;
+  let elementAfter = row[indexToMove + 1].value;
   if (element === elementAfter && !numbersAdded) {
-    row[indexToMove + 1] = element + elementAfter;
-    row[indexToMove] = 0;
+    row[indexToMove + 1] = { value: element + elementAfter, isCombined: true };
+    row[indexToMove] = { value: 0, isCombined: false };
     score += element + elementAfter;
     numbersAdded = true;
     return row;
   } else if (elementAfter === 0) {
-    row[indexToMove + 1] = element + elementAfter;
-    row[indexToMove] = 0;
+    row[indexToMove + 1] = { value: element + elementAfter, isCombined: false };
+    row[indexToMove] = { value: 0, isCombined: false };
   }
   return rightRecursion(indexToMove + 1, row);
 }
@@ -204,7 +212,7 @@ function moveVertical(dir) {
       numbersAdded = false;
       for (let j = 3; j >= 0; j--) {
         let element = transposedGrid[i][j];
-        if (element !== 0) {
+        if (element.value !== 0) {
           rightRecursion(j, transposedGrid[i]);
         }
       }
@@ -214,7 +222,7 @@ function moveVertical(dir) {
       numbersAdded = false;
       for (let j = 0; j < 4; j++) {
         let element = transposedGrid[i][j];
-        if (element !== 0) {
+        if (element.value !== 0) {
           leftRecursion(j, transposedGrid[i]);
         }
       }
@@ -229,7 +237,7 @@ function moveHorizontal(dir) {
       numbersAdded = false;
       for (let j = 3; j >= 0; j--) {
         let element = grid[i][j];
-        if (element !== 0) {
+        if (element.value !== 0) {
           rightRecursion(j, grid[i]);
         }
       }
@@ -239,7 +247,7 @@ function moveHorizontal(dir) {
       numbersAdded = false;
       for (let j = 0; j < 4; j++) {
         let element = grid[i][j];
-        if (element !== 0) {
+        if (element.value !== 0) {
           leftRecursion(j, grid[i]);
         }
       }
@@ -251,7 +259,7 @@ function getEmptyFieldIndexes() {
   let emptyFieldIndexes = [];
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 4; j++) {
-      if (grid[i][j] === 0) {
+      if (grid[i][j].value === 0) {
         emptyFieldIndexes.push({ x: i, y: j });
       }
     }
@@ -261,11 +269,11 @@ function getEmptyFieldIndexes() {
 
 function isValidMoveAvailable() {
   // Check if there is a valid merge that can be made
-  return true;
+  return false;
 }
 
 function getGameState() {
-  if (grid.some((row) => row.some((el) => el === 2048))) {
+  if (grid.some((row) => row.some((el) => el.value === 2048))) {
     return { gameOver: true, gameOverText: "You Win" };
   }
 
@@ -278,7 +286,12 @@ function getGameState() {
 }
 
 function addRandomElement() {
-  let randomElement = getRandomInt(0, 1) ? 2 : 4;
+  let randomElement = getRandomInt(0, 1)
+    ? { value: 2, isCombined: false }
+    : {
+        value: 4,
+        isCombined: false,
+      };
   //Find all empty field indexes and use that to randomly select one
   const emptyFieldIndexes = getEmptyFieldIndexes();
 
@@ -290,7 +303,7 @@ function addRandomElement() {
 function isGridChanged(gridBefore, gridAfter) {
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 4; j++) {
-      if (gridBefore[i][j] !== gridAfter[i][j]) {
+      if (gridBefore[i][j].value !== gridAfter[i][j].value) {
         return true;
       }
     }
@@ -300,7 +313,7 @@ function isGridChanged(gridBefore, gridAfter) {
 
 //Copy the grid to a new array
 function copyGrid(grid) {
-  return grid.map((row) => row.slice());
+  return grid.map((row) => row.map((cell) => ({ ...cell })));
 }
 
 function keyPressed(event) {
@@ -341,7 +354,6 @@ function keyPressed(event) {
       // Add a new element to the grid
       addRandomElement();
       const gameSate = getGameState();
-      console.log(gameSate);
       if (gameSate.gameOver) {
         drawGameOver(gameSate.gameOverText);
       } else {
