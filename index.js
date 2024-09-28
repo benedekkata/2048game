@@ -30,8 +30,6 @@ var cellSize = (CANVAS_SIZE - gridPadding * 5) / 4;
 
 var movementBlocked = false;
 
-var numbersAdded = false;
-
 var score = 0;
 var bestScore = localStorage.getItem("bestScore") ?? 0;
 
@@ -150,12 +148,18 @@ function leftRecursion(indexToMove, row) {
     return row;
   }
   let element = row[indexToMove].value;
+  let elementIsCombined = row[indexToMove].isCombined;
   let elementBefore = row[indexToMove - 1].value;
-  if (element === elementBefore && !numbersAdded) {
+  let elementBeforeIsCombined = row[indexToMove - 1].isCombined;
+  if (
+    element === elementBefore &&
+    !elementIsCombined &&
+    !elementBeforeIsCombined
+  ) {
     row[indexToMove - 1] = { value: element + elementBefore, isCombined: true };
-    row[indexToMove] = { value: 0, isCombined: false };
+    row[indexToMove] = { value: 0, isCombined: true };
+
     score += element + elementBefore;
-    numbersAdded = true;
     return row;
   } else if (elementBefore === 0) {
     row[indexToMove - 1] = {
@@ -172,12 +176,18 @@ function rightRecursion(indexToMove, row) {
     return row;
   }
   let element = row[indexToMove].value;
+  let elementIsCombined = row[indexToMove].isCombined;
   let elementAfter = row[indexToMove + 1].value;
-  if (element === elementAfter && !numbersAdded) {
+  let elementAfterIsCombined = row[indexToMove + 1].isCombined;
+  if (
+    element === elementAfter &&
+    !elementIsCombined &&
+    !elementAfterIsCombined
+  ) {
     row[indexToMove + 1] = { value: element + elementAfter, isCombined: true };
-    row[indexToMove] = { value: 0, isCombined: false };
+    row[indexToMove] = { value: 0, isCombined: true };
+
     score += element + elementAfter;
-    numbersAdded = true;
     return row;
   } else if (elementAfter === 0) {
     row[indexToMove + 1] = { value: element + elementAfter, isCombined: false };
@@ -209,7 +219,6 @@ function moveVertical(dir) {
   let transposedGrid = transposeMatrix(grid);
   if (dir === 1) {
     for (let i = 0; i < 4; i++) {
-      numbersAdded = false;
       for (let j = 3; j >= 0; j--) {
         let element = transposedGrid[i][j];
         if (element.value !== 0) {
@@ -219,7 +228,6 @@ function moveVertical(dir) {
     }
   } else {
     for (let i = 0; i < 4; i++) {
-      numbersAdded = false;
       for (let j = 0; j < 4; j++) {
         let element = transposedGrid[i][j];
         if (element.value !== 0) {
@@ -234,7 +242,6 @@ function moveVertical(dir) {
 function moveHorizontal(dir) {
   if (dir === 1) {
     for (let i = 0; i < 4; i++) {
-      numbersAdded = false;
       for (let j = 3; j >= 0; j--) {
         let element = grid[i][j];
         if (element.value !== 0) {
@@ -244,7 +251,6 @@ function moveHorizontal(dir) {
     }
   } else {
     for (let i = 0; i < 4; i++) {
-      numbersAdded = false;
       for (let j = 0; j < 4; j++) {
         let element = grid[i][j];
         if (element.value !== 0) {
@@ -316,6 +322,10 @@ function copyGrid(grid) {
   return grid.map((row) => row.map((cell) => ({ ...cell })));
 }
 
+function resetCombined() {
+  grid.forEach((row) => row.forEach((cell) => (cell.isCombined = false)));
+}
+
 function keyPressed(event) {
   if (movementBlocked) {
     return;
@@ -360,6 +370,7 @@ function keyPressed(event) {
         drawState();
       }
       movementBlocked = false;
+      resetCombined();
     });
   }
 }
