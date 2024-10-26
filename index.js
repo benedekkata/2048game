@@ -165,6 +165,12 @@ function drawState() {
   drawTiles();
 }
 
+/**
+ * A recursive function to move an element to the left based on the rules of the game
+ * @param {number} indexToMove The index of the element to move
+ * @param {array} row The row to move the element in
+ * @returns
+ */
 function leftRecursion(indexToMove, row) {
   if (indexToMove - 1 < 0) {
     return row;
@@ -193,6 +199,12 @@ function leftRecursion(indexToMove, row) {
   return leftRecursion(indexToMove - 1, row);
 }
 
+/**
+ * A recursive function to move an element to the right based on the rules of the game
+ * @param {number} indexToMove The index of the element to move
+ * @param {array} row The row to move the element in
+ * @returns
+ */
 function rightRecursion(indexToMove, row) {
   if (indexToMove + 1 >= row.length) {
     return row;
@@ -218,66 +230,52 @@ function rightRecursion(indexToMove, row) {
   return rightRecursion(indexToMove + 1, row);
 }
 
+/**
+ * Transposes a matrix
+ * @param {array} matrix
+ * @returns {array} The transposed matrix
+ */
 function transposeMatrix(matrix) {
-  const rows = matrix.length;
-  const cols = matrix[0].length;
-
-  // Create an empty matrix for the transposed result
-  let transposedMatrix = Array.from({ length: cols }, () =>
-    Array(rows).fill(0)
-  );
-
-  // Iterate over the matrix and swap rows with columns
-  for (let i = 0; i < rows; i++) {
-    for (let j = 0; j < cols; j++) {
-      transposedMatrix[j][i] = matrix[i][j];
-    }
-  }
-
-  return transposedMatrix;
+  return matrix[0].map((_, i) => matrix.map((row) => row[i]));
 }
 
+/**
+ * Moves the tiles vertically
+ * @param {number} dir The direction to move (1 for up, -1 for down)
+ */
 function moveVertical(dir) {
-  let transposedGrid = transposeMatrix(grid);
-  if (dir === 1) {
-    for (let i = 0; i < 4; i++) {
-      for (let j = 3; j >= 0; j--) {
-        let element = transposedGrid[i][j];
-        if (element.value !== 0) {
-          rightRecursion(j, transposedGrid[i]);
-        }
-      }
-    }
-  } else {
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 4; j++) {
-        let element = transposedGrid[i][j];
-        if (element.value !== 0) {
-          leftRecursion(j, transposedGrid[i]);
-        }
+  const transposedGrid = transposeMatrix(grid);
+
+  for (let i = 0; i < 4; i++) {
+    const row = transposedGrid[i];
+    const start = dir === 1 ? 3 : 0;
+    const end = dir === 1 ? -1 : 4;
+    const step = dir === 1 ? -1 : 1;
+
+    for (let j = start; j !== end; j += step) {
+      if (row[j].value !== 0) {
+        dir === 1 ? rightRecursion(j, row) : leftRecursion(j, row);
       }
     }
   }
+
   grid = transposeMatrix(transposedGrid);
 }
 
+/**
+ * Moves the tiles horizontally
+ * @param {number} dir The direction to move (1 for left, -1 for right)
+ */
 function moveHorizontal(dir) {
-  if (dir === 1) {
-    for (let i = 0; i < 4; i++) {
-      for (let j = 3; j >= 0; j--) {
-        let element = grid[i][j];
-        if (element.value !== 0) {
-          rightRecursion(j, grid[i]);
-        }
-      }
-    }
-  } else {
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 4; j++) {
-        let element = grid[i][j];
-        if (element.value !== 0) {
-          leftRecursion(j, grid[i]);
-        }
+  for (let i = 0; i < 4; i++) {
+    const row = grid[i];
+    const start = dir === 1 ? 3 : 0;
+    const end = dir === 1 ? -1 : 4;
+    const step = dir === 1 ? -1 : 1;
+
+    for (let j = start; j !== end; j += step) {
+      if (row[j].value !== 0) {
+        dir === 1 ? rightRecursion(j, row) : leftRecursion(j, row);
       }
     }
   }
@@ -300,19 +298,19 @@ function getEmptyFieldIndexes() {
  * @returns {boolean} True if there is a valid move available, false otherwise
  */
 function isValidMoveAvailable() {
-  for (let i = 0; i < 4; i++) {
-    for (let j = 0; j < 4; j++) {
-      if (
-        (j < 3 && grid[i][j].value === grid[i][j + 1].value) || // Horizontal check
-        (i < 3 && grid[i][j].value === grid[i + 1][j].value) // Vertical check
-      ) {
-        return true;
-      }
-    }
-  }
-  return false;
+  return grid.some((row, i) =>
+    row.some(
+      (cell, j) =>
+        (j < 3 && cell.value === row[j + 1].value) || // Horizontal check
+        (i < 3 && cell.value === grid[i + 1][j].value) // Vertical check
+    )
+  );
 }
 
+/**
+ * Checks if the game is over and returns the appropriate game state
+ * @returns {object} An object with the game state
+ */
 function getGameState() {
   if (grid.some((row) => row.some((el) => el.value === 2048))) {
     return { gameOver: true, gameOverText: "You Win" };
@@ -326,90 +324,114 @@ function getGameState() {
   return { gameOver: false, gameOverText: "" };
 }
 
+/**
+ * Adds a random element to the grid
+ */
 function addRandomElement() {
-  let randomElement = getRandomInt(0, 1)
-    ? { value: 2, isCombined: false }
-    : {
-        value: 4,
-        isCombined: false,
-      };
-  //Find all empty field indexes and use that to randomly select one
-  const emptyFieldIndexes = getEmptyFieldIndexes();
+  const randomElement = {
+    value: getRandomInt(0, 1) ? 2 : 4,
+    isCombined: false,
+  };
+  const emptyFields = getEmptyFieldIndexes();
 
-  const randomIndex = getRandomInt(0, emptyFieldIndexes.length - 1);
-  grid[emptyFieldIndexes[randomIndex].x][emptyFieldIndexes[randomIndex].y] =
-    randomElement;
-}
-
-function isGridChanged(gridBefore, gridAfter) {
-  for (let i = 0; i < 4; i++) {
-    for (let j = 0; j < 4; j++) {
-      if (gridBefore[i][j].value !== gridAfter[i][j].value) {
-        return true;
-      }
-    }
+  if (emptyFields.length) {
+    const { x, y } = emptyFields[getRandomInt(0, emptyFields.length - 1)];
+    grid[x][y] = randomElement;
   }
-  return false;
 }
 
-//Copy the grid to a new array
+/**
+ * Checks if the grid has changed
+ * @param {array} gridBefore The grid before the change
+ * @param {array} gridAfter The grid after the change
+ * @returns {boolean} True if the grid has changed, false otherwise
+ */
+function isGridChanged(gridBefore, gridAfter) {
+  return gridBefore.some((row, i) =>
+    row.some((cell, j) => cell.value !== gridAfter[i][j].value)
+  );
+}
+
+/**
+ * Copies the grid to a new array
+ * @param {array} grid The grid to copy
+ * @returns {array} A new array with the copied grid
+ */
 function copyGrid(grid) {
   return grid.map((row) => row.map((cell) => ({ ...cell })));
 }
 
+/**
+ * Resets the combined property of all cells
+ */
 function resetCombined() {
   grid.forEach((row) => row.forEach((cell) => (cell.isCombined = false)));
 }
 
+/**
+ * Main event handler for keyboard events and game logic
+ * @param {KeyboardEvent} event
+ * @returns
+ */
 function keyPressed(event) {
-  if (movementBlocked) {
-    return;
-  }
-  const gridBefore = copyGrid(grid);
-  switch (event.code) {
-    case "ArrowUp":
-      moveVertical(-1);
-      break;
-    case "ArrowDown":
-      moveVertical(1);
-      break;
-    case "ArrowLeft":
-      moveHorizontal(-1);
-      break;
-    case "ArrowRight":
-      moveHorizontal(1);
-      break;
-    default:
-      break;
-  }
+  if (movementBlocked) return;
 
+  const directions = {
+    ArrowUp: () => moveVertical(-1),
+    ArrowDown: () => moveVertical(1),
+    ArrowLeft: () => moveHorizontal(-1),
+    ArrowRight: () => moveHorizontal(1),
+  };
+
+  const moveAction = directions[event.code];
+  if (moveAction) {
+    const gridBefore = copyGrid(grid);
+    moveAction();
+    updateScore();
+    drawState();
+
+    if (isGridChanged(gridBefore, grid)) {
+      movementBlocked = true;
+      delay(250).then(() => {
+        addRandomElement();
+        checkGameState();
+      });
+    }
+  }
+}
+
+/**
+ * Updates  score and best score
+ */
+function updateScore() {
   document.getElementById("score").innerHTML = score;
   if (score > bestScore) {
     bestScore = score;
     localStorage.setItem("bestScore", score);
     document.getElementById("bestScore").innerHTML = score;
   }
-  // Draw the new state (before adding a new element)
-  drawState();
-
-  // Check if the grid has changed, if so, add a new element and check for win or lose
-  if (isGridChanged(gridBefore, grid)) {
-    movementBlocked = true;
-    delay(250).then(() => {
-      // Add a new element to the grid
-      addRandomElement();
-      const gameSate = getGameState();
-      drawState();
-      if (gameSate.gameOver) {
-        drawGameOver(gameSate.gameOverText, score);
-      } else {
-        movementBlocked = false;
-      }
-      resetCombined();
-    });
-  }
 }
 
+/**
+ * Checks if the game is over and draws the game over screen if it is
+ */
+function checkGameState() {
+  // Drawing game state under the transparent game over screen
+  drawState();
+  const gameState = getGameState();
+  if (gameState.gameOver) {
+    drawGameOver(gameState.gameOverText, score);
+  } else {
+    movementBlocked = false;
+  }
+  resetCombined();
+}
+
+/**
+ * Draws the game over screen
+ * @param {string} text The text to display
+ * @param {number} score The score to display
+ */
 function drawGameOver(text, score) {
   const textWidth = context.measureText(text).width;
   const scoreText = `+ ${score}`;
@@ -461,6 +483,11 @@ function drawGameOver(text, score) {
   );
 }
 
+/**
+ * Waits for the specified number of milliseconds
+ * @param {number} milliseconds
+ * @returns
+ */
 function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
