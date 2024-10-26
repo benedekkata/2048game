@@ -33,6 +33,10 @@ Once the game is won or lost, the user can restart the game by clicking the rest
 
 ## Screenshots
 
+![image](https://github.com/user-attachments/assets/f726ea99-c0fe-4467-a824-942217e8db38)
+
+![image](https://github.com/user-attachments/assets/aa4c8329-d761-4a31-9250-f3830d413ebe)
+
 ## License
 
 This project is licensed under the MIT License.
