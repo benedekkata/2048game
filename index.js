@@ -1,17 +1,17 @@
-var CANVAS_SIZE = 800;
-var FONT_SIZE = 40;
-var canvas = document.getElementById("gameCanvas");
+const CANVAS_SIZE = 800;
+const FONT_SIZE = 40;
+const canvas = document.getElementById("gameCanvas");
 
 //Setting the singleton context type for the canvas and getting it's reference back. Context is used to draw the things, canvas is the holder box
-var context = canvas.getContext("2d");
-var grid = [];
+const context = canvas.getContext("2d");
+let grid = [];
 
 canvas.height = CANVAS_SIZE;
 canvas.width = CANVAS_SIZE;
 
-var backgroundColor = "#542169";
-var blurBackgroundColor = "#54216950";
-var cellColor = {
+const backgroundColor = "#542169";
+const blurBackgroundColor = "#54216950";
+const cellColor = {
   2: "#BD8CF5",
   4: "#E9C46A",
   8: "#F4A261",
@@ -24,16 +24,19 @@ var cellColor = {
   1024: "#BD93D8",
   2048: "#A078C4",
 };
-var emptyColor = "#E7D7FE";
-var textColor = "#FFF";
-var gridPadding = 12;
-var cellSize = (CANVAS_SIZE - gridPadding * 5) / 4;
+const emptyColor = "#E7D7FE";
+const textColor = "#FFF";
+const gridPadding = 12;
+const cellSize = (CANVAS_SIZE - gridPadding * 5) / 4;
 
-var movementBlocked = false;
+let movementBlocked = false;
 
-var score = 0;
-var bestScore = localStorage.getItem("bestScore") ?? 0;
+let score = 0;
+let bestScore = localStorage.getItem("bestScore") ?? 0;
 
+/**
+ * Draws the colored tiles and the numbers on the canvas
+ */
 function drawTiles() {
   let i = 0;
   let j = 0;
@@ -63,6 +66,24 @@ function drawTiles() {
         context.roundRect(x, y, cellSize, cellSize, 12);
         context.fill(); // Fill the tile with the current fillStyle
 
+        // Draw the number if the tile is not empty
+        if (element !== 0) {
+          context.fillStyle = textColor;
+          context.beginPath();
+          context.font = `${FONT_SIZE}px sans-serif`;
+          const textWidth = context.measureText(element).width;
+          context.fillText(
+            element,
+            j * (cellSize + gridPadding) +
+              (cellSize / 2 + gridPadding - textWidth / 2),
+            i * (cellSize + gridPadding) +
+              cellSize / 2 +
+              FONT_SIZE / 2 +
+              FONT_SIZE / 10
+          );
+          context.stroke();
+        }
+
         j++;
       }
       i++;
@@ -70,53 +91,47 @@ function drawTiles() {
   }
 }
 
-function drawNumbers() {
-  context.fillStyle = textColor;
-  for (let i = 0; i < 4; i++) {
-    for (let j = 0; j < 4; j++) {
-      let element = grid[i][j].value;
-      if (element !== 0) {
-        context.beginPath();
-        context.font = `${FONT_SIZE}px sans-serif`;
-        const textWidth = context.measureText(element).width;
-        context.fillText(
-          element,
-          j * (cellSize + gridPadding) +
-            (cellSize / 2 + gridPadding - textWidth / 2),
-          i * (cellSize + gridPadding) +
-            cellSize / 2 +
-            FONT_SIZE / 2 +
-            FONT_SIZE / 10
-        );
-      }
-    }
-  }
-  context.stroke();
-}
-
+/**
+ * Returns a random integer between min and max (inclusive)
+ * @param {number} min The minimum value
+ * @param {number} max The maximum value
+ * @returns {number} A random integer between min and max (inclusive)
+ */
 function getRandomInt(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+/**
+ * Selects two random coordinates on the grid; ensures that the two coordinates are unique
+ * @returns {object} An object with the coordinates of the two tiles
+ */
 function getStartCoordinates() {
-  let x1S = getRandomInt(0, 3);
-  let y1S = getRandomInt(0, 3);
-  let x2S = getRandomInt(0, 3);
-  let y2S = getRandomInt(0, 3);
+  const coordinates = [
+    { x: getRandomInt(0, 3), y: getRandomInt(0, 3) },
+    { x: getRandomInt(0, 3), y: getRandomInt(0, 3) },
+  ];
 
-  while (x1S === x2S && y1S === y2S) {
-    console.log("Same coordinate, recalculating...");
-    x1S = getRandomInt(0, 3);
-    y1S = getRandomInt(0, 3);
-    x2S = getRandomInt(0, 3);
-    y2S = getRandomInt(0, 3);
+  // Ensure the two coordinates are unique
+  while (
+    coordinates[0].x === coordinates[1].x &&
+    coordinates[0].y === coordinates[1].y
+  ) {
+    coordinates[1] = { x: getRandomInt(0, 3), y: getRandomInt(0, 3) };
   }
 
-  return { x1S, x2S, y1S, y2S };
+  return {
+    x1S: coordinates[0].x,
+    y1S: coordinates[0].y,
+    x2S: coordinates[1].x,
+    y2S: coordinates[1].y,
+  };
 }
 
+/**
+ * Initializes the game by creating a grid with two random tiles
+ */
 function initGame() {
   grid = Array.from({ length: 4 }, () =>
     new Array(4).fill({ value: 0, isCombined: false })
@@ -131,6 +146,9 @@ function initGame() {
     : { value: 4, isCombined: false };
 }
 
+/**
+ * Restarts the game by resetting the score and the grid
+ */
 function restart() {
   score = 0;
   movementBlocked = false;
@@ -139,10 +157,12 @@ function restart() {
   drawState();
 }
 
+/**
+ * Draws the current state of the game on the canvas
+ */
 function drawState() {
   context.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
   drawTiles();
-  drawNumbers();
 }
 
 function leftRecursion(indexToMove, row) {
@@ -263,39 +283,33 @@ function moveHorizontal(dir) {
   }
 }
 
+/**
+ * Returns an array of empty field indexes
+ * @returns {array} An array of empty field indexes
+ */
 function getEmptyFieldIndexes() {
-  let emptyFieldIndexes = [];
-  for (let i = 0; i < 4; i++) {
-    for (let j = 0; j < 4; j++) {
-      if (grid[i][j].value === 0) {
-        emptyFieldIndexes.push({ x: i, y: j });
-      }
-    }
-  }
-  return emptyFieldIndexes;
+  return grid
+    .flatMap((row, i) =>
+      row.map((cell, j) => (cell.value === 0 ? { x: i, y: j } : null))
+    )
+    .filter(Boolean);
 }
 
+/**
+ * Checks if there is a valid move available
+ * @returns {boolean} True if there is a valid move available, false otherwise
+ */
 function isValidMoveAvailable() {
-  // Check if there is a valid merge that can be made
-  // There is a valid move if any adjacent element in a row or column is the same value
-  // Check for possible merges horizontally
   for (let i = 0; i < 4; i++) {
-    for (let j = 0; j < 3; j++) {
-      if (grid[i][j].value === grid[i][j + 1].value) {
-        return true;
-      }
-    }
-  }
-
-  // Check for possible merges vertically
-  for (let i = 0; i < 3; i++) {
     for (let j = 0; j < 4; j++) {
-      if (grid[i][j].value === grid[i + 1][j].value) {
+      if (
+        (j < 3 && grid[i][j].value === grid[i][j + 1].value) || // Horizontal check
+        (i < 3 && grid[i][j].value === grid[i + 1][j].value) // Vertical check
+      ) {
         return true;
       }
     }
   }
-
   return false;
 }
 
